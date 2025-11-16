@@ -28,8 +28,30 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class WelcomePage extends StatelessWidget {
+/* ---------------- WelcomePage (stateful for animations) ---------------- */
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
+
+  @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  // Steuerung der Auto-Einfahrt
+  bool animateCar = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto nach kurzem Delay von rechts herein fahren lassen
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          animateCar = true;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +87,7 @@ class WelcomePage extends StatelessWidget {
           child: SafeArea(
             child: Center(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
                 child: isLandscape
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -95,10 +116,8 @@ class WelcomePage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 18),
                                 ElevatedButton(
-                                  onPressed: () =>
-                                      Navigator.pushNamed(context, '/modes'),
-                                  child:
-                                      const Text('modes'),
+                                  onPressed: () => Navigator.pushNamed(context, '/modes'),
+                                  child: const Text('modes'),
                                 ),
                               ],
                             ),
@@ -106,32 +125,46 @@ class WelcomePage extends StatelessWidget {
 
                           const SizedBox(width: 16),
 
-                          // Rechte Spalte: zwei Bilder nebeneinander / gestaffet
+                          // Rechte Spalte: Flagge + Auto (Stack, Auto fährt VON RECHTS)
                           Expanded(
                             flex: 6,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ConstrainedBox(
-                                  constraints:
-                                      BoxConstraints(maxWidth: imageMaxWidth),
-                                  child: Image.asset(
-                                    'assets/Checkerflag.png',
-                                    fit: BoxFit.contain,
-                                    height: imageHeight,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                ConstrainedBox(
-                                  constraints:
-                                      BoxConstraints(maxWidth: imageMaxWidth),
-                                  child: Image.asset(
-                                    'assets/ferrari.png',
-                                    fit: BoxFit.contain,
-                                    height: imageHeight,
-                                  ),
-                                ),
-                              ],
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final imageMaxWidth = constraints.maxWidth * 0.45;
+                                final imageHeight = constraints.maxHeight * 0.8;
+
+                                return Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    // FLAGGE: positioniert etwas links hinter dem Auto
+                                    Positioned(
+                                      left: imageMaxWidth * 0.06,
+                                      top: imageHeight * -0.08,
+                                      child: Image.asset(
+                                        'assets/images/Checkerflag.png',
+                                        width: imageMaxWidth * 0.5,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+
+                                    // AUTO: fährt von rechts herein
+                                    AnimatedPositioned(
+                                      duration: const Duration(milliseconds: 900),
+                                      curve: Curves.easeOutCubic,
+                                      right: animateCar ? 0 : -constraints.maxWidth * 0.75,
+                                      bottom: 0,
+                                      child: SizedBox(
+                                        width: imageMaxWidth,
+                                        height: imageHeight,
+                                        child: Image.asset(
+                                          'assets/images/ferrari.png',
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ],
@@ -163,20 +196,18 @@ class WelcomePage extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                        maxWidth: inner.maxWidth * 0.4),
+                                    constraints: BoxConstraints(maxWidth: inner.maxWidth * 0.4),
                                     child: Image.asset(
-                                      'assets/Checkerflag.png',
+                                      'assets/images/Checkerflag.png',
                                       fit: BoxFit.contain,
                                       height: 160,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                        maxWidth: inner.maxWidth * 0.4),
+                                    constraints: BoxConstraints(maxWidth: inner.maxWidth * 0.4),
                                     child: Image.asset(
-                                      'assets/ferrari.png',
+                                      'assets/images/ferrari.png',
                                       fit: BoxFit.contain,
                                       height: 160,
                                     ),
@@ -187,15 +218,20 @@ class WelcomePage extends StatelessWidget {
                               return Column(
                                 children: [
                                   Image.asset(
-                                    'assets/Checkerflag.png',
+                                    'assets/images/Checkerflag.png',
                                     fit: BoxFit.contain,
                                     height: 140,
                                   ),
                                   const SizedBox(height: 8),
-                                  Image.asset(
-                                    'assets/ferrari.png',
-                                    fit: BoxFit.contain,
-                                    height: 140,
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 900),
+                                    curve: Curves.easeOutCubic,
+                                    margin: EdgeInsets.only(left: animateCar ? 0 : -inner.maxWidth * 0.7),
+                                    child: Image.asset(
+                                      'assets/images/ferrari.png',
+                                      fit: BoxFit.contain,
+                                      height: 140,
+                                    ),
                                   ),
                                 ],
                               );
@@ -217,6 +253,7 @@ class WelcomePage extends StatelessWidget {
   }
 }
 
+/* ---------------- ModeSelectionPage ---------------- */
 class ModeSelectionPage extends StatelessWidget {
   const ModeSelectionPage({super.key});
 
@@ -252,6 +289,7 @@ class ModeSelectionPage extends StatelessWidget {
   }
 }
 
+/* ---------------- ModePage (generic) ---------------- */
 class ModePage extends StatelessWidget {
   final String title;
   const ModePage({super.key, required this.title});
@@ -660,8 +698,14 @@ class _TrackingRoomPageState extends State<TrackingRoomPage> {
                       ),
                       child: Stack(
                         children: [
-                          // fake "camera" background
-                          Positioned.fill(child: Image.asset('assets/Checkerflag.png', fit: BoxFit.cover, color: Colors.white24, colorBlendMode: BlendMode.modulate)),
+                          // fake "camera" background -> correct asset path
+                          Positioned.fill(
+                              child: Image.asset(
+                            'assets/images/Checkerflag.png',
+                            fit: BoxFit.cover,
+                            color: Colors.white24,
+                            colorBlendMode: BlendMode.modulate,
+                          )),
                           // Beispiel-Hindernis
                           Positioned(
                             left: (MediaQuery.of(context).size.width - 24) * obstacleX,
